@@ -16,23 +16,22 @@ static uint32_t fading_color[SIMPLE_GRADIENT_STEPS];  // precomputed gradient [0
 * uint8_t steps   = number of steps we split fade
 * uint8_t step    = which step we compute and return
 ***********************************************************************/
+typedef float float4 __attribute__((ext_vector_type(4)));
+
 static uint32_t simple_gradient(const uint32_t *a, const uint32_t *b, const uint8_t steps, const uint8_t step)
 {
-    uint8_t fr[4], to[4];
-    float st[4];
+    float4  fr4, to4, col;  // use .xyzw vector components as ARGB color components
 
-    fr[0] = GET_A(*a), fr[1] = GET_R(*a), fr[2] = GET_G(*a), fr[3] = GET_B(*a),
-    to[0] = GET_A(*b), to[1] = GET_R(*b), to[2] = GET_G(*b), to[3] = GET_B(*b);
+    // load vectors
+    fr4 = (float4){ GET_A(*a), GET_R(*a), GET_G(*a), GET_B(*a) };
+    to4 = (float4){ GET_A(*b), GET_R(*b), GET_G(*b), GET_B(*b) };
 
-    st[0] = ((to[0] - fr[0]) / (float)(steps -1));
-    st[1] = ((to[1] - fr[1]) / (float)(steps -1));
-    st[2] = ((to[2] - fr[2]) / (float)(steps -1));
-    st[3] = ((to[3] - fr[3]) / (float)(steps -1));
+    // compute which color we return
+    col = ((to4 - fr4) / ( (float)(steps -1) ));  // num of slices
 
-    return ARGB((int)fr[0] + (int)(st[0] * step),
-                (int)fr[1] + (int)(st[1] * step),
-                (int)fr[2] + (int)(st[2] * step),
-                (int)fr[3] + (int)(st[3] * step));
+    fr4 += col * ( (float)(step) );  // requested slice
+
+    return ARGB( (uint8_t)fr4.x, (uint8_t)fr4.y, (uint8_t)fr4.z, (uint8_t)fr4.w );
 }
 
 
